@@ -1,0 +1,16 @@
+[package]
+name = "showerthoughts"
+version = "0.1.0"
+authors = ["Ivan Mondragon <imondrag@umich.edu>"]
+
+[dependencies]
+reqwest = "*"
+dirs = "*"
+rand = "*"
+futures = "*"
+tokio = "*"
+serde = "*"
+serde_derive = "*"
+serde_json = "*"
+bincode = "*"
+lazy_static = "*"

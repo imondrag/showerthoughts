@@ -1,0 +1,4 @@
+max_width = 80
+#wrap_comments = true
+#report_todo = "Always"
+#report_fixme = "Always"
