@@ -1,19 +1,7 @@
-extern crate bincode;
-extern crate dirs;
-extern crate futures;
-extern crate rand;
-extern crate reqwest;
-extern crate serde;
-extern crate serde_json;
-extern crate tokio;
-
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate lazy_static;
-
 use dirs::cache_dir;
+use lazy_static::lazy_static;
 use rand::{seq::SliceRandom, thread_rng};
+use serde_derive::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
