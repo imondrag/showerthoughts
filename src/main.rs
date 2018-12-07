@@ -13,7 +13,7 @@ extern crate serde_derive;
 extern crate lazy_static;
 
 use dirs::cache_dir;
-use rand::{thread_rng, Rng};
+use rand::{seq::SliceRandom, thread_rng};
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
@@ -49,8 +49,9 @@ fn main() {
         }
     };
 
+    let mut rng = thread_rng();
     let post: &RedditSingletonResponse =
-        thread_rng().choose(&api_res.data.children).unwrap();
+        api_res.data.children.choose(&mut rng).unwrap();
     println!("\n\"{}\"\n\t-{}", post.data.title, post.data.author);
 }
 
