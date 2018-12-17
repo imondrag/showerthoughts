@@ -6,10 +6,9 @@ authors = ["Ivan Mondragon <imondrag@umich.edu>"]
 
 [dependencies]
 reqwest = "*"
-dirs = "*"
+app_dirs = "*"
+preferences = "*"
 rand = "*"
-futures = "*"
-tokio = "*"
 serde = "*"
 serde_derive = "*"
 serde_json = "*"

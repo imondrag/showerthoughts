@@ -1,30 +1,23 @@
-use dirs::cache_dir;
-use lazy_static::lazy_static;
-use rand::{seq::SliceRandom, thread_rng};
-use serde_derive::{Deserialize, Serialize};
-use std::error::Error;
-use std::fs::File;
-use std::io::{BufReader, BufWriter};
-use std::path::PathBuf;
-use std::time::{Duration, SystemTime};
-
-type BoxResult<T> = Result<T, Box<dyn Error>>;
-
-lazy_static! {
-    static ref CACHE_PATH: PathBuf = {
-        let mut cache = cache_dir().unwrap();
-        cache.push("showerthoughts");
-        cache.set_file_name("list.bin");
-        cache
-    };
-}
-
-const REDDIT_URL: &'static str =
-    "https://www.reddit.com/r/showerthoughts/top.json?sort=top&t=week&limit=100";
-
-const CACHE_INVALIDATION_TIMEOUT: Duration = Duration::from_secs(60 * 60 * 8);
+use rand::seq::SliceRandom;
+use showerthoughts::{
+    read_cache_from_file, update_titles, RedditApiResponse,
+    RedditSingletonResponse, APP_INFO,
+};
 
 fn main() {
+    // On run, let's check if we've cached a response beforehand
+    //  if we have a cached response, check to see if it is still recent enough
+    //      if it's recent, use it,
+    //      otherwise fetch another response and cache it
+    //
+    //      if the fetch fails,
+    //      use the expired cached response anyway
+    //
+    //  if we don't have a cached response, fetch one and cache it
+    //      if the fetch fails, panic!('Error fetching response')
+    //
+    //  print randomly chosen value from response
+
     let api_res: RedditApiResponse = {
         if let Ok((cache, is_expired)) = read_cache_from_file() {
             if !is_expired {
@@ -33,75 +26,15 @@ fn main() {
                 update_titles().unwrap_or(cache)
             }
         } else {
-            update_titles().expect("COULD NOT CONNECT TO REDDIT API")
+            update_titles().expect("Error fetching response")
         }
     };
 
-    let mut rng = thread_rng();
-    let post: &RedditSingletonResponse =
-        api_res.data.children.choose(&mut rng).unwrap();
+    let mut rng = rand::thread_rng();
+    let post: &RedditSingletonResponse = api_res
+        .data
+        .children
+        .choose(&mut rng)
+        .expect("Error choosing post");
     println!("\n\"{}\"\n\t-{}", post.data.title, post.data.author);
-}
-
-fn update_titles() -> BoxResult<RedditApiResponse> {
-    let mut res = reqwest::get(REDDIT_URL)?;
-    let mut parsed: RedditApiResponse = res.json()?;
-    parsed.created = Some(SystemTime::now());
-
-    write_cache_to_file(&parsed)?;
-    Ok(parsed)
-}
-
-fn read_cache_from_file() -> BoxResult<(RedditApiResponse, bool)> {
-    // Open the file in read-only mode.
-    let fin = File::open(CACHE_PATH.as_path())?;
-
-    // Buffer while reading file to reduce syscalls
-    let fin = BufReader::new(fin);
-
-    let cache: RedditApiResponse = bincode::deserialize_from(fin)?;
-
-    let mut is_expired = true;
-    if let Some(created) = cache.created {
-        if created.elapsed()? > CACHE_INVALIDATION_TIMEOUT {
-            is_expired = false;
-        }
-    }
-
-    Ok((cache, is_expired))
-}
-
-fn write_cache_to_file(cache: &RedditApiResponse) -> Result<(), impl Error> {
-    // create dirs if they don't exist
-    std::fs::create_dir_all(CACHE_PATH.parent().unwrap())?;
-
-    // Create/truncate the file
-    let fout = File::create(CACHE_PATH.as_path())?;
-
-    // Buffer while writing file to reduce syscalls
-    let fout = BufWriter::new(fout);
-
-    bincode::serialize_into(fout, cache)
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct RedditApiResponse {
-    data: RedditData,
-    created: Option<SystemTime>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct RedditData {
-    children: Vec<RedditSingletonResponse>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct RedditSingletonResponse {
-    data: RedditSingletonData,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct RedditSingletonData {
-    author: String,
-    title: String,
 }
