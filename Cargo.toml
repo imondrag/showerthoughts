@@ -1,8 +1,9 @@
 [package]
 name = "showerthoughts"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2018"
 authors = ["Ivan Mondragon <imondrag@umich.edu>"]
+license = "MIT"
 
 [dependencies]
 reqwest = "0.9.5"
@@ -14,3 +15,7 @@ serde_derive = "1.0.82"
 serde_json = "1.0.33"
 bincode = "1.0.1"
 lazy_static = "1.2.0"
+
+[profile.release]
+opt-level = 3
+lto = true
