@@ -1,12 +1,15 @@
+mod models;
+
+use crate::models::*;
 use app_dirs::{app_root, AppDataType, AppInfo};
 use lazy_static::lazy_static;
-use serde_derive::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
-type BoxResult<T> = Result<T, Box<dyn Error>>;
+
+pub use crate::models::RedditSingletonResponse;
 
 pub const APP_INFO: AppInfo = AppInfo {
     name: env!("CARGO_PKG_NAME"),
@@ -14,9 +17,9 @@ pub const APP_INFO: AppInfo = AppInfo {
 };
 
 const REDDIT_URL: &'static str =
-    "https://www.reddit.com/r/showerthoughts/top.json?sort=top&t=week&limit=100";
+    "https://www.reddit.com/r/showerthoughts/top.json";
 
-const REDDIT_API_PARAMS: &[(&'static str, &'static str)] =
+const REDDIT_API_QUERY: &[(&'static str, &'static str)] =
     &[("sort", "top"), ("t", "week"), ("limit", "100")];
 
 // set to 12 hours
@@ -31,31 +34,9 @@ lazy_static! {
     };
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RedditApiResponse {
-    pub data: RedditData,
-    pub expires_at: Option<SystemTime>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RedditData {
-    pub children: Vec<RedditSingletonResponse>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RedditSingletonResponse {
-    pub data: RedditSingletonData,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RedditSingletonData {
-    pub author: String,
-    pub title: String,
-}
-
-pub fn update_titles() -> BoxResult<RedditApiResponse> {
+pub fn update_titles() -> Result<RedditApiResponse, Box<dyn Error>> {
     let client = reqwest::Client::new();
-    let mut res = client.post(REDDIT_URL).json(REDDIT_API_PARAMS).send()?;
+    let mut res = client.post(REDDIT_URL).json(REDDIT_API_QUERY).send()?;
 
     let mut parsed: RedditApiResponse = res.json()?;
     parsed.expires_at = Some(SystemTime::now() + CACHE_INVALIDATION_TIMEOUT);
@@ -64,7 +45,8 @@ pub fn update_titles() -> BoxResult<RedditApiResponse> {
     Ok(parsed)
 }
 
-pub fn read_cache_from_file() -> BoxResult<(RedditApiResponse, bool)> {
+pub fn read_cache_from_file(
+) -> Result<(RedditApiResponse, bool), Box<dyn Error>> {
     // Open the file in read-only mode.
     let fin = File::open(CACHE_PATH.as_path())?;
 
