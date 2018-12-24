@@ -1,6 +1,6 @@
 mod models;
 
-use crate::models::*;
+pub use crate::models::*;
 use app_dirs::{app_root, AppDataType, AppInfo};
 use lazy_static::lazy_static;
 use std::error::Error;
@@ -8,8 +8,6 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
-
-pub use crate::models::RedditSingletonResponse;
 
 pub const APP_INFO: AppInfo = AppInfo {
     name: env!("CARGO_PKG_NAME"),
@@ -34,34 +32,36 @@ lazy_static! {
     };
 }
 
-pub fn update_titles() -> Result<RedditApiResponse, Box<dyn Error>> {
+pub fn update_titles() -> Result<CachedPosts, Box<dyn Error>> {
     let client = reqwest::Client::new();
     let mut res = client.post(REDDIT_URL).json(REDDIT_API_QUERY).send()?;
 
-    let mut parsed: RedditApiResponse = res.json()?;
-    parsed.expires_at = Some(SystemTime::now() + CACHE_INVALIDATION_TIMEOUT);
+    let parsed: RedditApiResponse = res.json()?;
+    let expires_at = SystemTime::now() + CACHE_INVALIDATION_TIMEOUT;
 
-    write_cache_to_file(&parsed)?;
-    Ok(parsed)
+    let cache = CachedPosts {
+        posts: parsed.data.children,
+        expires_at,
+    };
+
+    write_cache_to_file(&cache)?;
+    Ok(cache)
 }
 
-pub fn read_cache_from_file(
-) -> Result<(RedditApiResponse, bool), Box<dyn Error>> {
+pub fn read_cache_from_file() -> Result<(CachedPosts, bool), Box<dyn Error>> {
     // Open the file in read-only mode.
     let fin = File::open(CACHE_PATH.as_path())?;
 
     // Buffer while reading file to reduce syscalls
     let fin = BufReader::new(fin);
 
-    let cache: RedditApiResponse = bincode::deserialize_from(fin)?;
-    let is_expired = cache.expires_at.map_or(true, |t| t > SystemTime::now());
+    let cache: CachedPosts = bincode::deserialize_from(fin)?;
+    let is_expired = cache.expires_at > SystemTime::now();
 
     Ok((cache, is_expired))
 }
 
-pub fn write_cache_to_file(
-    cache: &RedditApiResponse,
-) -> Result<(), impl Error> {
+pub fn write_cache_to_file(cache: &CachedPosts) -> Result<(), impl Error> {
     // Create/truncate the file
     let fout = File::create(CACHE_PATH.as_path())?;
 

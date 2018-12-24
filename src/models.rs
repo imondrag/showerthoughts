@@ -2,9 +2,14 @@ use serde_derive::{Deserialize, Serialize};
 use std::time::SystemTime;
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct CachedPosts {
+    pub posts: Vec<RedditSingletonResponse>,
+    pub expires_at: SystemTime,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RedditApiResponse {
     pub data: RedditData,
-    pub expires_at: Option<SystemTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -14,11 +19,11 @@ pub struct RedditData {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RedditSingletonResponse {
-    pub data: RedditSingletonData,
+    pub data: RedditPost,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct RedditSingletonData {
+pub struct RedditPost {
     pub author: String,
     pub title: String,
 }

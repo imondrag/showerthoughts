@@ -1,6 +1,6 @@
-use rand::seq::SliceRandom;
+use rand::prelude::*;
 use showerthoughts::{
-    read_cache_from_file, update_titles, RedditSingletonResponse,
+    read_cache_from_file, update_titles, RedditPost, RedditSingletonResponse,
 };
 
 fn load_posts() -> Vec<RedditSingletonResponse> {
@@ -14,7 +14,7 @@ fn load_posts() -> Vec<RedditSingletonResponse> {
         update_titles().expect("Error fetching response")
     };
 
-    cache.data.children
+    cache.posts
 }
 
 fn main() {
@@ -34,8 +34,10 @@ fn main() {
     let res_vec = load_posts();
     let mut rng = rand::thread_rng();
 
-    let post: &RedditSingletonResponse =
-        res_vec.choose(&mut rng).expect("Error choosing post");
+    let post: &RedditPost = res_vec
+        .choose(&mut rng)
+        .map(|w_data| &w_data.data) // unwrap the data field as a single post
+        .expect("Error choosing post");
 
-    println!("\"{}\"\n\t-{}", post.data.title, post.data.author);
+    println!("\"{}\"\n\t-{}", post.title, post.author);
 }
