@@ -34,7 +34,7 @@ lazy_static! {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RedditApiResponse {
     pub data: RedditData,
-    pub created: Option<SystemTime>,
+    pub expires_at: Option<SystemTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -58,7 +58,7 @@ pub fn update_titles() -> BoxResult<RedditApiResponse> {
     let mut res = client.post(REDDIT_URL).json(REDDIT_API_PARAMS).send()?;
 
     let mut parsed: RedditApiResponse = res.json()?;
-    parsed.created = Some(SystemTime::now());
+    parsed.expires_at = Some(SystemTime::now() + CACHE_INVALIDATION_TIMEOUT);
 
     write_cache_to_file(&parsed)?;
     Ok(parsed)
@@ -72,13 +72,7 @@ pub fn read_cache_from_file() -> BoxResult<(RedditApiResponse, bool)> {
     let fin = BufReader::new(fin);
 
     let cache: RedditApiResponse = bincode::deserialize_from(fin)?;
-
-    let mut is_expired = true;
-    if let Some(created) = cache.created {
-        if created.elapsed()? > CACHE_INVALIDATION_TIMEOUT {
-            is_expired = false;
-        }
-    }
+    let is_expired = cache.expires_at.map_or(true, |t| t > SystemTime::now());
 
     Ok((cache, is_expired))
 }

@@ -1,8 +1,20 @@
 use rand::seq::SliceRandom;
 use showerthoughts::{
     read_cache_from_file, update_titles, RedditApiResponse,
-    RedditSingletonResponse, APP_INFO,
+    RedditSingletonResponse,
 };
+
+fn load_response() -> RedditApiResponse {
+    if let Ok((cache, is_expired)) = read_cache_from_file() {
+        if !is_expired {
+            cache
+        } else {
+            update_titles().unwrap_or(cache)
+        }
+    } else {
+        update_titles().expect("Error fetching response")
+    }
+}
 
 fn main() {
     // On run, let's check if we've cached a response beforehand
@@ -18,23 +30,14 @@ fn main() {
     //
     //  print randomly chosen value from response
 
-    let api_res: RedditApiResponse = {
-        if let Ok((cache, is_expired)) = read_cache_from_file() {
-            if !is_expired {
-                cache
-            } else {
-                update_titles().unwrap_or(cache)
-            }
-        } else {
-            update_titles().expect("Error fetching response")
-        }
-    };
-
+    let api_res = load_response();
     let mut rng = rand::thread_rng();
+
     let post: &RedditSingletonResponse = api_res
         .data
         .children
         .choose(&mut rng)
         .expect("Error choosing post");
-    println!("\n\"{}\"\n\t-{}", post.data.title, post.data.author);
+
+    println!("\"{}\"\n\t-{}", post.data.title, post.data.author);
 }
