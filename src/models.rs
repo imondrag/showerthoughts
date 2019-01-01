@@ -2,6 +2,19 @@ use serde_derive::{Deserialize, Serialize};
 use std::time::SystemTime;
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct UserConfig {
+    subreddits: Vec<String>,
+}
+
+impl Default for UserConfig {
+    fn default() -> UserConfig {
+        UserConfig {
+            subreddits: vec!["showerthoughts".into()],
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CachedPosts {
     pub posts: Vec<RedditSingletonResponse>,
     pub expires_at: SystemTime,

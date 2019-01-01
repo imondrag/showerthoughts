@@ -31,6 +31,8 @@ fn main() {
     //
     //  print randomly chosen value from response
 
+    pretty_env_logger::init();
+
     let res_vec = load_posts();
     let mut rng = rand::thread_rng();
 
