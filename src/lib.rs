@@ -3,6 +3,7 @@ mod models;
 pub use crate::models::*;
 use app_dirs::{app_root, AppDataType, AppInfo};
 use lazy_static::lazy_static;
+#[allow(unused)]
 use log::debug;
 use std::error::Error;
 use std::fs::File;
@@ -25,7 +26,6 @@ const CACHE_INVALIDATION_TIMEOUT: Duration = Duration::from_secs(60 * 60 * 12);
 
 lazy_static! {
     static ref CACHE_PATH: PathBuf = {
-        debug!("creating cache");
         let mut cache = app_root(AppDataType::UserCache, &APP_INFO)
             .expect("ERROR: could not create cache");
         cache.push("list.bin");
@@ -33,6 +33,7 @@ lazy_static! {
     };
 }
 
+/*
 lazy_static! {
     static ref USER_CONFIG: UserConfig = {
         let mut config = app_root(AppDataType::UserConfig, &APP_INFO)
@@ -41,6 +42,7 @@ lazy_static! {
         config
     };
 }
+*/
 
 pub fn update_titles() -> Result<CachedPosts, Box<dyn Error>> {
     let client = reqwest::Client::new();
@@ -49,7 +51,6 @@ pub fn update_titles() -> Result<CachedPosts, Box<dyn Error>> {
         REDDIT_SOURCES.join("+")
     );
 
-    debug!("sending POST to {}", url);
     let mut res = client.post(&url).json(REDDIT_API_QUERY).send()?;
 
     let parsed: RedditApiResponse = res.json()?;
@@ -65,7 +66,6 @@ pub fn update_titles() -> Result<CachedPosts, Box<dyn Error>> {
 }
 
 pub fn read_cache_from_file() -> Result<(CachedPosts, bool), Box<dyn Error>> {
-    debug!("attempting to read from cache");
 
     // Open the file in read-only mode.
     let fin = File::open(CACHE_PATH.as_path())?;
@@ -80,7 +80,6 @@ pub fn read_cache_from_file() -> Result<(CachedPosts, bool), Box<dyn Error>> {
 }
 
 pub fn write_cache_to_file(cache: &CachedPosts) -> Result<(), impl Error> {
-    debug!("attempting to write to cache");
 
     // Create/truncate the file
     let fout = File::create(CACHE_PATH.as_path())?;
