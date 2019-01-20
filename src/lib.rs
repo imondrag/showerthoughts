@@ -66,7 +66,6 @@ pub fn update_titles() -> Result<CachedPosts, Box<dyn Error>> {
 }
 
 pub fn read_cache_from_file() -> Result<(CachedPosts, bool), Box<dyn Error>> {
-
     // Open the file in read-only mode.
     let fin = File::open(CACHE_PATH.as_path())?;
 
@@ -80,7 +79,6 @@ pub fn read_cache_from_file() -> Result<(CachedPosts, bool), Box<dyn Error>> {
 }
 
 pub fn write_cache_to_file(cache: &CachedPosts) -> Result<(), impl Error> {
-
     // Create/truncate the file
     let fout = File::create(CACHE_PATH.as_path())?;
 
