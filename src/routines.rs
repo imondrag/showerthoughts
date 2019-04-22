@@ -1,5 +1,3 @@
-mod models;
-
 pub use crate::models::*;
 use app_dirs::{app_root, AppDataType, AppInfo};
 use lazy_static::lazy_static;
@@ -26,8 +24,8 @@ const CACHE_INVALIDATION_TIMEOUT: Duration = Duration::from_secs(60 * 60 * 12);
 
 lazy_static! {
     static ref CACHE_PATH: PathBuf = {
-        let mut cache = app_root(AppDataType::UserCache, &APP_INFO)
-            .expect("ERROR: could not create cache");
+        let mut cache =
+            app_root(AppDataType::UserCache, &APP_INFO).expect("ERROR: could not create cache");
         cache.push("list.bin");
         cache
     };

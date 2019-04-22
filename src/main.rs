@@ -1,5 +1,8 @@
+mod models;
+mod routines;
+
+use crate::routines::*;
 use rand::prelude::*;
-use showerthoughts::{read_cache_from_file, update_titles, RedditPost, RedditSingletonResponse};
 
 fn load_posts() -> Vec<RedditSingletonResponse> {
     let cache = if let Ok((cache, is_expired)) = read_cache_from_file() {
